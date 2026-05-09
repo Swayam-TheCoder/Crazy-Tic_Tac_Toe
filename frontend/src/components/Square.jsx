@@ -13,17 +13,19 @@ function Square({
       onClick={onClick}
       className={`
         w-28 h-28
+        rounded-xl
+        border-2
         flex items-center
         justify-center
-        border-2
-        rounded-xl
         transition-all
         duration-300
 
         ${
           isWinningSquare
-            ? "bg-green-500 border-green-400 scale-105"
-            : "bg-zinc-800 border-zinc-700 hover:bg-zinc-700"
+
+          ? "bg-green-500 border-green-400 scale-105"
+
+          : "bg-zinc-800 border-zinc-700 hover:bg-zinc-700"
         }
       `}
     >
@@ -37,4 +39,3 @@ function Square({
 }
 
 export default Square;
-// Draw Detection: Board full and no winner
