@@ -129,10 +129,17 @@ function Board({ mode, roomId, player }) {
 
   // RESET GAME
   const resetGame = () => {
-    setBoard(Array(9).fill(null));
+  if (mode === "online") {
+    socket.emit("reset_game", {
+      roomId,
+    });
 
-    setIsXTurn(true);
-  };
+    return;
+  }
+
+  setBoard(Array(9).fill(null));
+  setIsXTurn(true);
+};
 
   // RESET SCOREBOARD
 
