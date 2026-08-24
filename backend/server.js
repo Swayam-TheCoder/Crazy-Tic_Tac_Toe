@@ -196,6 +196,34 @@ io.on("connection", (socket) => {
   });
 });
 
+socket.on("reset_game", ({ roomId }) => {
+  const room = rooms.get(roomId);
+
+  if (!room) {
+    return;
+  }
+
+  // Check whether the player belongs to this room
+  if (
+    room.players.X !== socket.id &&
+    room.players.O !== socket.id
+  ) {
+    return;
+  }
+
+  // Reset game state
+  room.board = Array(9).fill(null);
+  room.turn = "X";
+  room.winner = null;
+
+  // Send reset state to BOTH players
+  io.to(roomId).emit("game_state", {
+    board: room.board,
+    turn: room.turn,
+    winner: room.winner,
+  });
+});
+
   // DISCONNECT
   socket.on("disconnect", () => {
     console.log("User Disconnected:", socket.id);

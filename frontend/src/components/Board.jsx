@@ -14,6 +14,10 @@ function Board({ mode, roomId, player }) {
 
   const [drawScore, setDrawScore] = useState(0);
 
+  const [waitingForOpponent, setWaitingForOpponent] = useState(
+    mode === "online" && player === "X",
+  );
+
   const winnerData = calculateWinner(board);
 
   const winner = winnerData?.winner;
@@ -27,6 +31,8 @@ function Board({ mode, roomId, player }) {
 
     socket.on("game_ready", () => {
       console.log("Both players are ready!");
+
+      setWaitingForOpponent(false);
     });
 
     socket.on("game_state", (gameState) => {
@@ -270,6 +276,22 @@ function Board({ mode, roomId, player }) {
                 ? `Turn: ${isXTurn ? "X" : "O"}`
                 : `Turn: ${isXTurn ? "X" : "O"}`}
       </h2>
+
+      {mode === "online" && waitingForOpponent && player === "X" && (
+        <div className="mb-8 text-center">
+          <p className="text-zinc-400 mb-2">
+            Share this Room ID with your friend
+          </p>
+
+          <div className="bg-zinc-800 border border-cyan-500 rounded-xl px-8 py-4">
+            <p className="text-3xl font-bold tracking-widest text-cyan-400">
+              {roomId}
+            </p>
+          </div>
+
+          <p className="text-zinc-500 mt-3">Waiting for opponent...</p>
+        </div>
+      )}
 
       {/* BUTTONS */}
       <div
