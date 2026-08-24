@@ -58,23 +58,90 @@ const io = new Server(httpServer, {
 });
 
 // SOCKET CONNECTION
+const rooms = new Map();
+
 io.on("connection", (socket) => {
   console.log("User Connected:", socket.id);
 
-  socket.on("join_room", (room) => {
-    socket.join(room);
+  // CREATE ROOM
+  socket.on("create_room", (callback) => {
+    let roomId;
 
-    console.log(`User joined ${room}`);
+    do {
+      roomId = Math.random()
+        .toString(36)
+        .substring(2, 8)
+        .toUpperCase();
+    } while (rooms.has(roomId));
+
+    rooms.set(roomId, {
+      players: {
+        X: socket.id,
+        O: null,
+      },
+    });
+
+    socket.join(roomId);
+
+    callback({
+      success: true,
+      roomId,
+      player: "X",
+    });
+
+    console.log(`${socket.id} created room ${roomId}`);
   });
 
-  // RECEIVE MOVE
-  socket.on("move", (data) => {
-    socket.to(data.room).emit("receive_move", data.board);
+  // JOIN ROOM
+  socket.on("join_room", ({ roomId }, callback) => {
+    const room = rooms.get(roomId);
+
+    if (!room) {
+      callback({
+        success: false,
+        message: "Room does not exist",
+      });
+
+      return;
+    }
+
+    if (room.players.O) {
+      callback({
+        success: false,
+        message: "Room is full",
+      });
+
+      return;
+    }
+
+    room.players.O = socket.id;
+
+    socket.join(roomId);
+
+    callback({
+      success: true,
+      roomId,
+      player: "O",
+    });
+
+    io.to(roomId).emit("game_ready");
+
+    console.log(`${socket.id} joined room ${roomId}`);
   });
 
   // DISCONNECT
   socket.on("disconnect", () => {
-    console.log("User Disconnected");
+    console.log("User Disconnected:", socket.id);
+
+    for (const [roomId, room] of rooms) {
+      if (room.players.X === socket.id || room.players.O === socket.id) {
+        io.to(roomId).emit("opponent_disconnected");
+
+        rooms.delete(roomId);
+
+        break;
+      }
+    }
   });
 });
 
