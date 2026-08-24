@@ -29,12 +29,20 @@ function Board({ mode, roomId, player }) {
       console.log("Both players are ready!");
     });
 
+    socket.on("game_state", (gameState) => {
+      console.log("Game state received:", gameState);
+
+      setBoard(gameState.board);
+      setIsXTurn(gameState.turn === "X");
+    });
+
     socket.on("opponent_disconnected", () => {
       alert("Opponent disconnected");
     });
 
     return () => {
       socket.off("game_ready");
+      socket.off("game_state");
       socket.off("opponent_disconnected");
     };
   }, [mode]);
@@ -86,7 +94,18 @@ function Board({ mode, roomId, player }) {
 
     // ONLINE MODE
     if (mode === "online") {
-      console.log("Online move clicked:", index);
+      // Only allow the current player to move
+      const currentPlayer = isXTurn ? "X" : "O";
+
+      if (currentPlayer !== player) {
+        return;
+      }
+
+      socket.emit("make_move", {
+        roomId,
+        index,
+      });
+
       return;
     }
 
@@ -242,14 +261,14 @@ function Board({ mode, roomId, player }) {
       "
       >
         {winner
-  ? `Winner: ${winner} 🎉`
-  : isDraw
-    ? "It's a Draw 🤝"
-    : mode === "bot"
-      ? "Your Turn"
-      : mode === "online"
-        ? `Turn: ${isXTurn ? "X" : "O"}`
-        : `Turn: ${isXTurn ? "X" : "O"}`}
+          ? `Winner: ${winner} 🎉`
+          : isDraw
+            ? "It's a Draw 🤝"
+            : mode === "bot"
+              ? "Your Turn"
+              : mode === "online"
+                ? `Turn: ${isXTurn ? "X" : "O"}`
+                : `Turn: ${isXTurn ? "X" : "O"}`}
       </h2>
 
       {/* BUTTONS */}

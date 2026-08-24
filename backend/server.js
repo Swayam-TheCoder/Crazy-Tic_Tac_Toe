@@ -26,7 +26,7 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: allowedOrigins,
-  })
+  }),
 );
 
 app.use(express.json());
@@ -70,10 +70,7 @@ io.on("connection", (socket) => {
     let roomId;
 
     do {
-      roomId = Math.random()
-        .toString(36)
-        .substring(2, 8)
-        .toUpperCase();
+      roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
     } while (rooms.has(roomId));
 
     rooms.set(roomId, {
@@ -81,6 +78,9 @@ io.on("connection", (socket) => {
         X: socket.id,
         O: null,
       },
+      board: Array(9).fill(null),
+      turn: "X",
+      winner: null,
     });
 
     socket.join(roomId);
@@ -131,6 +131,71 @@ io.on("connection", (socket) => {
     console.log(`${socket.id} joined room ${roomId}`);
   });
 
+  // MAKE MOVE
+  socket.on("make_move", ({ roomId, index }) => {
+  const room = rooms.get(roomId);
+
+  // Room doesn't exist
+  if (!room) {
+    return;
+  }
+
+  // Find which player this socket is
+  let player = null;
+
+  if (room.players.X === socket.id) {
+    player = "X";
+  } else if (room.players.O === socket.id) {
+    player = "O";
+  }
+
+  // Player isn't part of the room
+  if (!player) {
+    return;
+  }
+
+  // Game already finished
+  if (room.winner) {
+    return;
+  }
+
+  // Not this player's turn
+  if (room.turn !== player) {
+    return;
+  }
+
+  // Invalid index
+  if (index < 0 || index > 8) {
+    return;
+  }
+
+  // Square already occupied
+  if (room.board[index] !== null) {
+    return;
+  }
+
+  // Make move
+  room.board[index] = player;
+
+  // Check winner
+  const result = calculateWinner(room.board);
+
+  if (result) {
+    room.winner = result.winner;
+  } else if (room.board.every((square) => square !== null)) {
+    room.winner = "DRAW";
+  } else {
+    room.turn = room.turn === "X" ? "O" : "X";
+  }
+
+  // Send updated state to both players
+  io.to(roomId).emit("game_state", {
+    board: room.board,
+    turn: room.turn,
+    winner: room.winner,
+  });
+});
+
   // DISCONNECT
   socket.on("disconnect", () => {
     console.log("User Disconnected:", socket.id);
@@ -146,6 +211,36 @@ io.on("connection", (socket) => {
     }
   });
 });
+
+function calculateWinner(board) {
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 4, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+
+  for (const line of lines) {
+    const [a, b, c] = line;
+
+    if (
+      board[a] &&
+      board[a] === board[b] &&
+      board[a] === board[c]
+    ) {
+      return {
+        winner: board[a],
+        line,
+      };
+    }
+  }
+
+  return null;
+}
 
 // START SERVER
 
