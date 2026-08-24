@@ -1,0 +1,1 @@
+Real-time multiplayer Tic-Tac-Toe game built with React, Node.js, Express, Socket.IO, and MongoDB. Supports online rooms, X/O player assignment, synchronized gameplay, real-time moves, game resets, and match history.
