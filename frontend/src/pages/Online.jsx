@@ -44,18 +44,11 @@ function Online() {
 
   // GAME STARTED
   if (gameRoom && player) {
-    return (
-      <Board
-        mode="online"
-        roomId={gameRoom}
-        player={player}
-      />
-    );
+    return <Board mode="online" roomId={gameRoom} player={player} />;
   }
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white flex flex-col items-center justify-center px-4">
-
       <h1 className="text-5xl font-bold mb-10 text-cyan-400">
         Online Multiplayer
       </h1>
@@ -75,12 +68,9 @@ function Online() {
         Create Game
       </button>
 
-      <div className="text-zinc-500 mb-6">
-        OR
-      </div>
+      <div className="text-zinc-500 mb-6">OR</div>
 
       <div className="flex gap-3">
-
         <input
           value={roomId}
           onChange={(e) => setRoomId(e.target.value)}
@@ -107,9 +97,7 @@ function Online() {
         >
           Join
         </button>
-
       </div>
-
     </div>
   );
 }

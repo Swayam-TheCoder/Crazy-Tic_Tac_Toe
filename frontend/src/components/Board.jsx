@@ -3,7 +3,7 @@ import { socket } from "../socket";
 
 import Square from "./Square";
 
-function Board({ mode }) {
+function Board({ mode, roomId, player }) {
   const [board, setBoard] = useState(Array(9).fill(null));
 
   const [isXTurn, setIsXTurn] = useState(true);
@@ -22,23 +22,22 @@ function Board({ mode }) {
 
   const isDraw = !winner && board.every((square) => square !== null);
 
-  const roomId = "room1";
-
   useEffect(() => {
-    // JOIN ROOM
-    socket.emit("join_room", roomId);
+    if (mode !== "online") return;
 
-    // RECEIVE MOVE
-    socket.on("receive_move", (newBoard) => {
-      setBoard(newBoard);
+    socket.on("game_ready", () => {
+      console.log("Both players are ready!");
+    });
 
-      setIsXTurn((prev) => !prev);
+    socket.on("opponent_disconnected", () => {
+      alert("Opponent disconnected");
     });
 
     return () => {
-      socket.off("receive_move");
+      socket.off("game_ready");
+      socket.off("opponent_disconnected");
     };
-  }, []);
+  }, [mode]);
 
   // HANDLE CLICK
 
@@ -87,17 +86,8 @@ function Board({ mode }) {
 
     // ONLINE MODE
     if (mode === "online") {
-      newBoard[index] = isXTurn ? "X" : "O";
-
-      setBoard(newBoard);
-
-      setIsXTurn(!isXTurn);
-
-      socket.emit("move", {
-        room: roomId,
-
-        board: newBoard,
-      });
+      console.log("Online move clicked:", index);
+      return;
     }
 
     // SCORE UPDATE
@@ -236,6 +226,13 @@ function Board({ mode }) {
         ))}
       </div>
 
+      {mode === "online" && (
+        <p className="mt-4 text-lg text-zinc-400">
+          You are playing as{" "}
+          <span className="text-cyan-400 font-bold">{player}</span>
+        </p>
+      )}
+
       {/* STATUS */}
       <h2
         className="
@@ -245,12 +242,14 @@ function Board({ mode }) {
       "
       >
         {winner
-          ? `Winner: ${winner} 🎉`
-          : isDraw
-            ? "It's a Draw 🤝"
-            : mode === "bot"
-              ? "Your Turn"
-              : `Turn: ${isXTurn ? "X" : "O"}`}
+  ? `Winner: ${winner} 🎉`
+  : isDraw
+    ? "It's a Draw 🤝"
+    : mode === "bot"
+      ? "Your Turn"
+      : mode === "online"
+        ? `Turn: ${isXTurn ? "X" : "O"}`
+        : `Turn: ${isXTurn ? "X" : "O"}`}
       </h2>
 
       {/* BUTTONS */}
