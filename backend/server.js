@@ -18,12 +18,15 @@ const app = express();
 
 // MIDDLEWARE
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://tic-tac-toe-multiplayer-kappa.vercel.app",
+];
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
-    methods: ["GET", "POST", "DELETE"],
-    credentials: true,
-  }),
+    origin: allowedOrigins,
+  })
 );
 
 app.use(express.json());
@@ -46,14 +49,13 @@ mongoose
   });
 
 // HTTP SERVER
-
 const httpServer = createServer(app);
 
 // SOCKET.IO
-
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL,
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
   },
 });
 
